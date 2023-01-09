@@ -1,18 +1,53 @@
 #!/usr/bin/env node
 
-import { exec } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+import spawn from 'cross-spawn'
+import prompts from 'prompts'
 
-const runSingleExec = (name) => {
+const cwd = process.cwd()
+
+const runSingleExec = async (name) => {
   var mes = null
   var err = null
   if (!name || name === '') return;
 
-  exec(name, function (error, stdout, stderr) {
-    console.log('当前git:'+stdout)
-    mes = stdout.toString()
+  function setValue(key, value) {
+    console.log('key:')
+    console.log(key)
+    console.log('value:')
+    mes = value
+  }
+
+  function mkdir(dirPath, dirName) {
+    if(dirName !== path.dirname(dirPath)) {
+      mkdir(dirPath)
+      return;
+    }
+    if(fs.existsSync(dirName)) {
+      fs.mkdirSync(dirPath)
+    }else {
+      mkdir(dirName, path.dirname(dirName))
+      fs.mkdirSync(dirPath)
+    }
+  }
+
+  // const response = await prompts({
+  //   type: 'number',
+  //   name: 'value',
+  //   message: 'How old are you?',
+  //   validate: value => value < 18 ? `Nightclub is 18+ only` : true
+  // });
+  // console.log(response);
+
+  const { status } = spawn.sync('npm install', [], {
+    stdio: 'inherit',
   })
-  console.log('当前返回信息:'+ mes)
+  process.exit(status ?? 0)
+
+  return {mes, err};
 }
 
-const gitName = runSingleExec('git config user.name')
-console.log(gitName)
+let acount = runSingleExec('git config user.name')
+
+console.log(acount)

@@ -30,5 +30,13 @@
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/202780181/pub-nexus.git",
+    "directory": "index"
+  },
+  "bugs": {
+    "url": "https://github.com/202780181/pub-nexus/issues"
   }
 }
