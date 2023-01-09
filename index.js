@@ -2,19 +2,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import spawn from 'cross-spawn'
-import prompts from 'prompts'
-import {
-  blue,
-  cyan,
-  green,
-  lightGreen,
-  lightRed,
-  magenta,
-  red,
-  reset,
-  yellow,
-} from 'kolorist'
+import { red, } from 'kolorist'
 
 const cwd = process.cwd()
 
@@ -30,7 +18,6 @@ function removeDir(dir) {
     let newPath = path.join(dir, files[i]);
     let stat = fs.statSync(newPath)
     if (stat.isDirectory()) {
-      //如果是文件夹就递归下去
       removeDir(newPath);
     } else {
       //删除文件
@@ -40,14 +27,31 @@ function removeDir(dir) {
   fs.rmdirSync(dir)
 }
 
-function copy(src, dest) {
-  let path = `${cwd}`
-  if(!fileExist(path)) {
+const isExist = (path) => {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path)
+  }
+}
+
+function copy(src, target) {
+  if(!fileExist(cwd)) {
     fs.mkdir(defaultTargetDir, function (error) {
       if(error) {
         throw new Error(red('✖') + 'mkdir error, process exit')
       }
 
+      const sourceFile = fs.readdirSync(src,  { withFileTypes: true })
+
+      sourceFile.forEach(file=> {
+        const newSourcePath = path.resolve(src, file.name)
+        const newTargetPath = path.resolve(target, file.name)
+
+        if (file.isDirectory()) {
+          isExist(newTargetPath)
+          copy(newSourcePath, newTargetPath)
+        }
+        fs.copyFileSync(newSourcePath, newTargetPath)
+      })
     })
   }
 }
@@ -67,7 +71,7 @@ async function init() {
   if (fileExist(path)) {
     removeDir(path)
   }
-  copy()
+  copy(dist, path)
 }
 
 init().catch((e) => {
