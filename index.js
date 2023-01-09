@@ -34,8 +34,10 @@ const isExist = (path) => {
 }
 
 function copy(src, target) {
-  if(!fileExist(cwd)) {
-    fs.mkdir(defaultTargetDir, function (error) {
+  let path = `${cwd}/dist`
+  let copyPath = `${cwd}/${defaultTargetDir}`
+  if(!fileExist(path)) {
+    fs.mkdir(copyPath, function (error) {
       if(error) {
         throw new Error(red('✖') + 'mkdir error, process exit')
       }
@@ -53,6 +55,7 @@ function copy(src, target) {
         fs.copyFileSync(newSourcePath, newTargetPath)
       })
     })
+    console.log(path.resolve(__dirname, './src'))
   }
 }
 
