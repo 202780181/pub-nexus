@@ -7,7 +7,7 @@ import { red, green } from 'kolorist'
 
 const cwd = process.cwd()
 
-const defaultTargetDir = 'publish'
+const defaultTargetDir = 'nexus'
 
 function fileExist(path) {
   return fs.existsSync(path)
@@ -85,7 +85,7 @@ const addPackageJSON = (projectName, version) => {
   ],
   "devDependencies": {},
   "publishConfig" : {
-    "registry" : "http://dev.fw135.com:8066/repository/npm-group"
+    "registry" : "http://dev.fw135.com:8066/repository/npm-group/"
   }
 }
 `
@@ -94,9 +94,9 @@ const addPackageJSON = (projectName, version) => {
 const npmRc = (email) => {
   return `
   registry=http://dev.fw135.com:8066/repository/npm-group/
-  email=202780181@qq.com
+  email=
   always-auth=true
-  _auth="cmZ0QDAzMDM="
+  _auth="ZGV2JTNBcmZ0QDAzMDM="
   `
 }
 
@@ -174,7 +174,7 @@ async function init() {
     removeDir(path)
   }
   copy(dist, path)
-  push()
+  // push()
 }
 
 init().catch((e) => {
