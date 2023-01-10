@@ -87,14 +87,24 @@ function copyDirOld(src, dest, callback) {
 }
 
 function copyToDir(srcDir, destDir) {
-  // node >= 16.7.0
-  fs.cp(srcDir, destDir, {recursive: true}, (err) => {
-    if (err) {
-      console.log(red('✖ 文件复制失败,请重试'))
-      process.exit(0)
-    }
-  });
-  console.log(green('✔️文件复制完成'))
+  let version = process.versions.node
+  if (Number(version) <= Number('16.7.0')) {
+    copyDirOld(srcDir, destDir, (err) => {
+      if (err) {
+        console.log(red('✖ 文件复制失败,请重试'))
+        process.exit(0)
+      }
+    })
+  } else {
+    // node >= 16.7.0
+    fs.cp(srcDir, destDir, {recursive: true}, (err) => {
+      if (err) {
+        console.log(red('✖ 文件复制失败,请重试'))
+        process.exit(0)
+      }
+    })
+  }
+  console.log(green('✔️ 文件复制完成'))
 }
 
 function copy(src, target) {
@@ -106,8 +116,8 @@ function copy(src, target) {
         console.log(red('✖ mkdir error, process exit'))
         process.exit(0)
       }
-      copyToDir(src, target)
     })
+    copyToDir(src, target)
   }
 }
 
