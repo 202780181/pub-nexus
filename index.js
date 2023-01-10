@@ -3,7 +3,7 @@
 import fs from 'node:fs'
 import { exec } from 'node:child_process'
 import path from 'node:path'
-import { red, green } from 'kolorist'
+import { red, green, yellow } from 'kolorist'
 
 const cwd = process.cwd()
 
@@ -100,10 +100,29 @@ const npmRc = (email) => {
   `
 }
 
+const getCwdPath = () => {
+  let base = cwd.split('/')
+  let rootPath = cwd
+  let isRoot = true
+  let target = `${cwd}/${defaultTargetDir}`
+  if (base[base.length - 1] === defaultTargetDir) {
+    target = path.resolve(cwd, defaultTargetDir, '..')
+    target = path.resolve(cwd, '..')
+    isRoot = false
+  }
+
+  return {
+    target,
+    rootPath,
+    isRoot
+  }
+}
+
 function copyToDir(srcDir, destDir) {
   let deepPath = destDir + '/dist'
   let version = process.versions.node
-  let pkg = JSON.parse(fs.readFileSync(cwd + '/package.json', 'utf8'))
+  let { rootPath } = getCwdPath()
+  let pkg = JSON.parse(fs.readFileSync(rootPath + '/package.json', 'utf8'))
   if (Number(version) <= Number('16.7.0')) {
     copyDirOld(srcDir, deepPath, (err) => {
       if (err) {
@@ -150,30 +169,33 @@ function copy(src, target) {
 }
 
 function push() {
-  console.log('执行命令---->')
   exec('npm publish', function (err) {
     console.log(err)
   })
 }
 
 async function init() {
-
-  let path = `${cwd}/${defaultTargetDir}`
-  let pack = `${cwd}/package.json`
-  let dist = `${cwd}/dist`
-
-  if (!fileExist(pack)) {
+  let rootBase = cwd
+  let { target } = getCwdPath()
+  let rootPack = `${cwd}/package.json`
+  let rootDist = `${cwd}/dist`
+  const { isRoot } = getCwdPath()
+  if(!isRoot) {
+    console.log(yellow('✖ 当前路径不允许执行构建命令'))
+    process.exit(0)
+  }
+  if (!fileExist(rootPack)) {
     console.log(red('✖ 位置目录异常, pub-nexus 已终止'))
     process.exit(0)
   }
-  if (!fileExist(dist)) {
+  if (!fileExist(rootDist)) {
     console.log(red('✖ 请先构建出dist生产文件后 再执行发布'))
     process.exit(0)
   }
-  if (fileExist(path)) {
-    removeDir(path)
+  if (fileExist(target)) {
+    removeDir(target)
   }
-  copy(dist, path)
+  copy(rootDist, target, rootBase)
   // push()
 }
 
