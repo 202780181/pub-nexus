@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs'
+import { exec } from 'node:child_process'
 import path from 'node:path'
 import { red, green } from 'kolorist'
 
@@ -11,17 +12,6 @@ const defaultTargetDir = 'publish'
 function fileExist(path) {
   return fs.existsSync(path)
 }
-
-const packagePlate = `
-{
-  "name": "unit",
-  "version": "1.0.0",
-  "files": [
-    "dist"
-  ],
-  "devDependencies": {}
-}
-`
 
 function removeDir(dir) {
   let files = fs.readdirSync(dir)
@@ -86,10 +76,36 @@ function copyDirOld(src, dest, callback) {
   })
 }
 
+const addPackageJSON = (projectName, version) => {
+  return `{
+  "name": "${projectName}",
+  "version": "${version || '1.0.0'}",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {},
+  "publishConfig" : {
+    "registry" : "http://dev.fw135.com:8066/repository/npm-group"
+  }
+}
+`
+}
+
+const npmRc = (email) => {
+  return `
+  registry=http://dev.fw135.com:8066/repository/npm-group/
+  email=202780181@qq.com
+  always-auth=true
+  _auth="cmZ0QDAzMDM="
+  `
+}
+
 function copyToDir(srcDir, destDir) {
+  let deepPath = destDir + '/dist'
   let version = process.versions.node
+  let pkg = JSON.parse(fs.readFileSync(cwd + '/package.json', 'utf8'))
   if (Number(version) <= Number('16.7.0')) {
-    copyDirOld(srcDir, destDir, (err) => {
+    copyDirOld(srcDir, deepPath, (err) => {
       if (err) {
         console.log(red('✖ 文件复制失败,请重试'))
         process.exit(0)
@@ -97,13 +113,25 @@ function copyToDir(srcDir, destDir) {
     })
   } else {
     // node >= 16.7.0
-    fs.cp(srcDir, destDir, {recursive: true}, (err) => {
+    fs.cp(srcDir, deepPath, {recursive: true}, (err) => {
       if (err) {
         console.log(red('✖ 文件复制失败,请重试'))
         process.exit(0)
       }
     })
   }
+  fs.writeFile(destDir + '/package.json', addPackageJSON(pkg.name, pkg.version), 'utf-8', (err) => {
+    if (err) {
+      console.log(red('✖ package.json 创建失败，请重新执行 pub'))
+      process.exit(0)
+    }
+  })
+  fs.writeFile(destDir + '/.npmrc', npmRc(pkg.name, pkg.version), 'utf-8', (err) => {
+    if (err) {
+      console.log(red('✖ npmrc 创建失败，请重新执行 pub'))
+      process.exit(0)
+    }
+  })
   console.log(green('✔️ 文件复制完成'))
 }
 
@@ -119,6 +147,13 @@ function copy(src, target) {
     })
     copyToDir(src, target)
   }
+}
+
+function push() {
+  console.log('执行命令---->')
+  exec('npm publish', function (err) {
+    console.log(err)
+  })
 }
 
 async function init() {
@@ -139,6 +174,7 @@ async function init() {
     removeDir(path)
   }
   copy(dist, path)
+  push()
 }
 
 init().catch((e) => {
